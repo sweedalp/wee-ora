@@ -659,33 +659,21 @@ const aboutFacts = [
   { title: 'You keep', text: 'Your WhatsApp chats. We only help the first hello look pretty.' },
 ]
 
-const whatsappNumber = '917619556110'
-const whatsappDisplay = '+91 76195 56110'
-const whatsappLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
-  'Hi Wee-ora! I want a pretty page for my brand.',
-)}`
+// Change this to the inbox where form messages should arrive.
+const contactEmail = 'hello@wee-ora.com'
+const contactHref = '#contact'
 
 const contactStory = {
   eyebrow: 'Contact',
-  title: 'Say hello on WhatsApp.',
-  lead: 'Tell us your brand type and we will help you pick Glow, Aura, or Luxe. Daytime replies usually within ~2 hours.',
+  title: 'Send a soft hello.',
+  lead: 'Share your brand type and we will help you pick Glow, Aura, or Luxe. Daytime replies usually within ~2 hours — your message comes to us by email, privately.',
   status: 'Replies in ~2 hours',
   hours: 'Mon–Sat · 10:00–19:00 IST',
-  phone: whatsappDisplay,
-  starters: [
-    'Hi! I run a boutique and want Aura.',
-    'Need a cafe page with menu + WhatsApp.',
-    'Salon booking — is Luxe right for us?',
-  ],
-  brief: ['Brand name', '5–10 photos', 'Hours & place', 'Prices / services', 'WhatsApp number'],
+  brief: ['Brand name', '5–10 photos', 'Hours & place', 'Prices / services', 'Your contact email'],
   promises: [
     { value: '~2 hrs', label: 'Daytime reply' },
     { value: '5–15d', label: 'Typical launch' },
     { value: '₹2,999', label: 'Starts from' },
-  ],
-  chat: [
-    { from: 'you', text: 'Hi! We need a pretty cafe page.' },
-    { from: 'swee', text: 'Aura fits well — menu, hours AI, and WhatsApp enquiries.' },
   ],
 }
 
@@ -1478,7 +1466,160 @@ function WorkCard({ sample, index, visible, iconSrc }) {
   )
 }
 
-function PackageCard({ pkg, index, visible, whatsappHref }) {
+function ContactForm() {
+  const [status, setStatus] = useState('idle')
+  const [error, setError] = useState('')
+
+  const onSubmit = async (e) => {
+    e.preventDefault()
+    setStatus('sending')
+    setError('')
+    const form = e.currentTarget
+    const data = new FormData(form)
+    const payload = {
+      name: String(data.get('name') || '').trim(),
+      email: String(data.get('email') || '').trim(),
+      brand: String(data.get('brand') || '').trim(),
+      message: String(data.get('message') || '').trim(),
+      _subject: 'New wee-ora enquiry',
+      _template: 'table',
+      _captcha: 'false',
+    }
+
+    try {
+      const res = await fetch(`https://formsubmit.co/ajax/${contactEmail}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(payload),
+      })
+      if (!res.ok) throw new Error('Could not send right now')
+      setStatus('sent')
+      form.reset()
+    } catch {
+      setStatus('error')
+      setError('Something went wrong. Please try again in a moment.')
+    }
+  }
+
+  const fieldStyle = {
+    width: '100%',
+    boxSizing: 'border-box',
+    border: `1px solid ${colors.line}`,
+    borderRadius: 14,
+    padding: '0.9rem 1rem',
+    fontFamily: fonts.body,
+    fontSize: '1rem',
+    color: colors.cocoa,
+    background: colors.cream,
+    outline: 'none',
+  }
+
+  const labelStyle = {
+    display: 'block',
+    marginBottom: '0.4rem',
+    fontSize: '0.92rem',
+    color: colors.cocoaSoft,
+    fontWeight: 500,
+  }
+
+  if (status === 'sent') {
+    return (
+      <div
+        style={{
+          borderRadius: 20,
+          border: `1px solid ${colors.line}`,
+          background: colors.cream,
+          padding: '1.6rem 1.4rem',
+          textAlign: 'center',
+        }}
+      >
+        <p style={{ margin: '0 0 0.45rem', fontFamily: fonts.display, fontSize: '1.7rem', fontWeight: 500 }}>
+          Message received
+        </p>
+        <p style={{ margin: 0, color: colors.cocoaSoft, lineHeight: 1.55, fontSize: '1.05rem' }}>
+          Thanks for writing. We will reply by email within daytime hours.
+        </p>
+        <button
+          type="button"
+          onClick={() => setStatus('idle')}
+          style={{
+            marginTop: '1.1rem',
+            ...ctaStyle,
+            border: 'none',
+            cursor: 'pointer',
+            padding: '0.8rem 1.2rem',
+            fontSize: '1rem',
+          }}
+        >
+          Send another
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <form onSubmit={onSubmit} style={{ display: 'grid', gap: '0.9rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }} className="contact-form-row">
+        <label style={{ display: 'block' }}>
+          <span style={labelStyle}>Your name</span>
+          <input name="name" required autoComplete="name" placeholder="Sana" style={fieldStyle} />
+        </label>
+        <label style={{ display: 'block' }}>
+          <span style={labelStyle}>Your email</span>
+          <input
+            name="email"
+            type="email"
+            required
+            autoComplete="email"
+            placeholder="you@brand.com"
+            style={fieldStyle}
+          />
+        </label>
+      </div>
+      <label style={{ display: 'block' }}>
+        <span style={labelStyle}>Brand / business</span>
+        <input name="brand" required placeholder="Bloom Atelier, cafe, salon…" style={fieldStyle} />
+      </label>
+      <label style={{ display: 'block' }}>
+        <span style={labelStyle}>Message</span>
+        <textarea
+          name="message"
+          required
+          rows={5}
+          placeholder="Tell us what you sell and which plan you are curious about."
+          style={{ ...fieldStyle, resize: 'vertical', minHeight: 120, lineHeight: 1.5 }}
+        />
+      </label>
+      {error && (
+        <p style={{ margin: 0, color: '#9B4A4A', fontSize: '0.95rem' }}>{error}</p>
+      )}
+      <button
+        type="submit"
+        disabled={status === 'sending'}
+        style={{
+          ...ctaStyle,
+          border: 'none',
+          cursor: status === 'sending' ? 'wait' : 'pointer',
+          padding: '1rem 1.35rem',
+          fontSize: '1.08rem',
+          opacity: status === 'sending' ? 0.75 : 1,
+          width: '100%',
+          textAlign: 'center',
+        }}
+      >
+        {status === 'sending' ? 'Sending…' : 'Send message'}
+      </button>
+      <p style={{ margin: 0, color: colors.cocoaSoft, fontSize: '0.9rem', lineHeight: 1.45 }}>
+        Your note goes to our inbox only. No public phone number on this page.
+      </p>
+    </form>
+  )
+}
+
+function PackageCard({ pkg, index, visible, contactHref: pkgContactHref }) {
   const [hover, setHover] = useState(false)
   const featured = !!pkg.featured
   const baseLift = featured ? -16 : 0
@@ -1673,9 +1814,7 @@ function PackageCard({ pkg, index, visible, whatsappHref }) {
       </ul>
 
       <HoverLink
-        href={whatsappHref}
-        target="_blank"
-        rel="noreferrer"
+        href={pkgContactHref || contactHref}
         style={{
           ...ctaStyle,
           width: '100%',
@@ -1989,9 +2128,7 @@ export default function App() {
 
           <div className="nav-desktop" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <HoverLink
-              href={whatsappLink}
-              target="_blank"
-              rel="noreferrer"
+              href={contactHref}
               style={{
                 ...ctaStyle,
                 padding: '0.85rem 1.4rem',
@@ -2065,9 +2202,7 @@ export default function App() {
               </a>
             ))}
             <a
-              href={whatsappLink}
-              target="_blank"
-              rel="noreferrer"
+              href={contactHref}
               onClick={() => setMenuOpen(false)}
               style={{ ...ctaStyle, textAlign: 'center', marginTop: '0.55rem' }}
             >
@@ -2230,9 +2365,7 @@ export default function App() {
             }}
           >
             <HoverLink
-              href={whatsappLink}
-              target="_blank"
-              rel="noreferrer"
+              href={contactHref}
               style={{
                 ...ctaStyle,
                 padding: '1.05rem 1.55rem',
@@ -3013,9 +3146,7 @@ export default function App() {
             Look pretty → Reply when busy → Get enquiries
           </p>
           <HoverLink
-            href={whatsappLink}
-            target="_blank"
-            rel="noreferrer"
+            href={contactHref}
             style={{
               ...ctaStyle,
               padding: '0.9rem 1.3rem',
@@ -3117,7 +3248,7 @@ export default function App() {
               pkg={pkg}
               index={index}
               visible={!!visible.packages}
-              whatsappHref={whatsappLink}
+              contactHref={contactHref}
             />
           ))}
         </div>
@@ -3182,16 +3313,14 @@ export default function App() {
             Not sure which plan fits? Message us with your business type. We will suggest one.
           </p>
           <HoverLink
-            href={whatsappLink}
-            target="_blank"
-            rel="noreferrer"
+            href={contactHref}
             style={{
               ...ctaStyle,
               padding: '0.95rem 1.35rem',
               fontSize: '1.1rem',
             }}
           >
-            Ask on WhatsApp
+            Ask us here
           </HoverLink>
         </div>
       </section>
@@ -3272,9 +3401,7 @@ export default function App() {
               See how a boutique, cafe, or salon can feel with Wee-ora. Your brand can follow the same soft style.
             </p>
             <HoverLink
-              href={whatsappLink}
-              target="_blank"
-              rel="noreferrer"
+              href={contactHref}
               style={{
                 ...ctaStyle,
                 padding: '0.95rem 1.3rem',
@@ -4099,14 +4226,12 @@ export default function App() {
                 Ready for a soft page?
               </p>
               <p style={{ margin: 0, color: colors.cocoaSoft, fontSize: '1.18rem', maxWidth: 560, lineHeight: 1.55 }}>
-                Tell us what you sell and we will suggest Glow, Aura, or Luxe on WhatsApp.
+                Tell us what you sell and we will suggest Glow, Aura, or Luxe by email.
               </p>
             </div>
           </div>
           <HoverLink
-            href={whatsappLink}
-            target="_blank"
-            rel="noreferrer"
+            href={contactHref}
             style={{
               ...ctaStyle,
               padding: '1.05rem 1.5rem',
@@ -4114,7 +4239,7 @@ export default function App() {
               boxShadow: '0 12px 28px rgba(58, 47, 44, 0.14)',
             }}
           >
-            Message Sweedal
+            Send a message
           </HoverLink>
         </div>
       </section>
@@ -4229,7 +4354,7 @@ export default function App() {
           className="contact-grid"
           style={{
             display: 'grid',
-            gridTemplateColumns: '1.05fr 0.95fr',
+            gridTemplateColumns: '1.15fr 0.85fr',
             gap: '1.25rem',
             alignItems: 'stretch',
             marginBottom: '1.25rem',
@@ -4247,116 +4372,45 @@ export default function App() {
               opacity: visible.contact ? 1 : 0,
               transform: visible.contact ? 'translateY(0)' : 'translateY(20px)',
               transition: 'opacity 0.65s ease 0.1s, transform 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.1s',
-              display: 'flex',
-              flexDirection: 'column',
+              padding: '1.35rem 1.35rem 1.4rem',
             }}
           >
-            <div
-              style={{
-                padding: '1.25rem 1.3rem 1.1rem',
-                background: `
-                  radial-gradient(circle at 85% 15%, ${colors.blush}66 0%, transparent 45%),
-                  linear-gradient(165deg, ${colors.cream} 0%, #F8EAEF 70%, ${colors.lilac}33 100%)
-                `,
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', marginBottom: '1rem' }}>
-                <div style={{ position: 'relative' }}>
-                  <img
-                    src={icon}
-                    alt=""
-                    style={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: 14,
-                      objectFit: 'cover',
-                      border: `1px solid ${colors.line}`,
-                    }}
-                  />
-                  <span
-                    aria-hidden="true"
-                    style={{
-                      position: 'absolute',
-                      right: -1,
-                      bottom: -1,
-                      width: 12,
-                      height: 12,
-                      borderRadius: '50%',
-                      background: '#6BAF8D',
-                      border: `2px solid ${colors.white}`,
-                      animation: 'sweePulse 1.8s ease-in-out infinite',
-                    }}
-                  />
-                </div>
-                <div>
-                  <p style={{ margin: '0 0 0.15rem', fontFamily: fonts.display, fontSize: '1.55rem', fontWeight: 500, lineHeight: 1.1 }}>
-                    Chat with Sweedal
-                  </p>
-                  <p style={{ margin: 0, color: colors.cocoaSoft, fontSize: '0.98rem' }}>{contactStory.hours}</p>
-                </div>
-              </div>
-
-              <div
-                style={{
-                  borderRadius: 16,
-                  background: 'rgba(255,252,250,0.9)',
-                  border: `1px solid ${colors.line}`,
-                  padding: '0.9rem',
-                  display: 'grid',
-                  gap: '0.55rem',
-                }}
-              >
-                {contactStory.chat.map((msg, i) => (
-                  <div
-                    key={`${msg.from}-${i}`}
-                    style={{
-                      justifySelf: msg.from === 'you' ? 'end' : 'start',
-                      maxWidth: '88%',
-                      padding: '0.65rem 0.85rem',
-                      borderRadius: msg.from === 'you' ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
-                      background: msg.from === 'you' ? colors.cocoa : colors.cream,
-                      color: msg.from === 'you' ? colors.cream : colors.cocoa,
-                      fontSize: '0.98rem',
-                      lineHeight: 1.45,
-                      opacity: visible.contact ? 1 : 0,
-                      transform: visible.contact ? 'translateY(0)' : 'translateY(10px)',
-                      transition: `opacity 0.45s ease ${0.2 + i * 0.1}s, transform 0.45s ease ${0.2 + i * 0.1}s`,
-                    }}
-                  >
-                    {msg.text}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div style={{ padding: '1.15rem 1.3rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-              <div style={{ display: 'flex', gap: '0.65rem', flexWrap: 'wrap' }}>
-                <HoverLink
-                  href={whatsappLink}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{ ...ctaStyle, padding: '0.85rem 1.25rem', fontSize: '1.05rem' }}
-                >
-                  Chat on WhatsApp
-                </HoverLink>
-                <HoverLink
-                  href="#packages"
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', marginBottom: '1.15rem' }}>
+              <div style={{ position: 'relative' }}>
+                <img
+                  src={icon}
+                  alt=""
                   style={{
-                    ...ctaStyle,
-                    background: 'transparent',
-                    color: colors.cocoa,
-                    border: `1px solid ${colors.cocoa}`,
-                    padding: '0.85rem 1.25rem',
-                    fontSize: '1.05rem',
+                    width: 48,
+                    height: 48,
+                    borderRadius: 14,
+                    objectFit: 'cover',
+                    border: `1px solid ${colors.line}`,
                   }}
-                >
-                  See prices
-                </HoverLink>
+                />
+                <span
+                  aria-hidden="true"
+                  style={{
+                    position: 'absolute',
+                    right: -1,
+                    bottom: -1,
+                    width: 12,
+                    height: 12,
+                    borderRadius: '50%',
+                    background: '#6BAF8D',
+                    border: `2px solid ${colors.white}`,
+                    animation: 'sweePulse 1.8s ease-in-out infinite',
+                  }}
+                />
               </div>
-              <p style={{ margin: 0, fontFamily: fonts.display, fontSize: '1.45rem', fontWeight: 500 }}>
-                {contactStory.phone}
-              </p>
+              <div>
+                <p style={{ margin: '0 0 0.15rem', fontFamily: fonts.display, fontSize: '1.55rem', fontWeight: 500, lineHeight: 1.1 }}>
+                  Write to wee-ora
+                </p>
+                <p style={{ margin: 0, color: colors.cocoaSoft, fontSize: '0.98rem' }}>{contactStory.hours}</p>
+              </div>
             </div>
+            <ContactForm />
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -4403,49 +4457,33 @@ export default function App() {
                 borderRadius: 20,
                 border: `1px solid ${colors.line}`,
                 background: colors.white,
-                padding: '1.15rem 1.2rem',
+                padding: '1.25rem 1.25rem',
                 flex: 1,
                 opacity: visible.contact ? 1 : 0,
                 transform: visible.contact ? 'translateY(0)' : 'translateY(14px)',
                 transition: 'opacity 0.55s ease 0.25s, transform 0.55s ease 0.25s',
               }}
             >
-              <p style={{ margin: '0 0 0.75rem', fontFamily: fonts.display, fontSize: '1.45rem', fontWeight: 500 }}>
-                Quick starters
+              <p style={{ margin: '0 0 0.65rem', fontFamily: fonts.display, fontSize: '1.45rem', fontWeight: 500 }}>
+                Private by design
               </p>
-              <div style={{ display: 'grid', gap: '0.55rem' }}>
-                {contactStory.starters.map((starter, i) => (
-                  <a
-                    key={starter}
-                    href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(starter)}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="contact-starter"
-                    style={{
-                      textDecoration: 'none',
-                      color: colors.cocoa,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: '0.65rem',
-                      padding: '0.75rem 0.9rem',
-                      borderRadius: 12,
-                      border: `1px solid ${colors.line}`,
-                      background: colors.cream,
-                      fontSize: '0.98rem',
-                      lineHeight: 1.4,
-                      opacity: visible.contact ? 1 : 0,
-                      transform: visible.contact ? 'translateX(0)' : 'translateX(10px)',
-                      transition: `opacity 0.45s ease ${0.3 + i * 0.07}s, transform 0.45s ease ${0.3 + i * 0.07}s`,
-                    }}
-                  >
-                    <span>{starter}</span>
-                    <span aria-hidden="true" style={{ color: colors.gold, flexShrink: 0 }}>
-                      →
-                    </span>
-                  </a>
-                ))}
-              </div>
+              <p style={{ margin: '0 0 1rem', color: colors.cocoaSoft, lineHeight: 1.55, fontSize: '1.02rem' }}>
+                No public phone number. Your note reaches our inbox only, and we reply by email.
+              </p>
+              <HoverLink
+                href="#packages"
+                style={{
+                  ...ctaStyle,
+                  background: 'transparent',
+                  color: colors.cocoa,
+                  border: `1px solid ${colors.cocoa}`,
+                  padding: '0.85rem 1.25rem',
+                  fontSize: '1.05rem',
+                  display: 'inline-block',
+                }}
+              >
+                See prices
+              </HoverLink>
             </div>
           </div>
         </div>
@@ -4635,22 +4673,20 @@ export default function App() {
               >
                 Get in touch
               </p>
-              <p style={{ margin: '0 0 0.25rem', color: colors.cocoaSoft, fontSize: '1.02rem' }}>WhatsApp</p>
+              <p style={{ margin: '0 0 0.25rem', color: colors.cocoaSoft, fontSize: '1.02rem' }}>Private message</p>
               <p
                 style={{
                   margin: '0 0 1rem',
                   fontFamily: fonts.display,
-                  fontSize: '1.55rem',
+                  fontSize: '1.45rem',
                   fontWeight: 500,
-                  lineHeight: 1.15,
+                  lineHeight: 1.2,
                 }}
               >
-                {whatsappDisplay}
+                Send a note
               </p>
               <HoverLink
-                href={whatsappLink}
-                target="_blank"
-                rel="noreferrer"
+                href={contactHref}
                 style={{
                   ...ctaStyle,
                   padding: '0.8rem 1.2rem',
@@ -4658,7 +4694,7 @@ export default function App() {
                   borderRadius: 11,
                 }}
               >
-                Chat on WhatsApp
+                Open contact form
               </HoverLink>
               <div style={{ marginTop: '1.15rem', display: 'grid', gap: '0.35rem' }}>
                 <p style={{ margin: 0, color: colors.cocoaSoft, fontSize: '1.02rem' }}>{footerStory.hours}</p>
@@ -5062,6 +5098,9 @@ export default function App() {
 
           /* Phone */
           @media (max-width: 520px) {
+            .contact-form-row {
+              grid-template-columns: 1fr !important;
+            }
             .nav-tagline { display: none !important; }
             .nav-shell { padding: 0.55rem 3.5vw !important; }
             .nav-inner {
