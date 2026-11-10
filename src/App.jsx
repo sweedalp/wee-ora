@@ -659,8 +659,9 @@ const aboutFacts = [
   { title: 'You keep', text: 'Your WhatsApp chats. We only help the first hello look pretty.' },
 ]
 
-// Change this to the inbox where form messages should arrive.
+// Business inbox + Web3Forms access key (from https://app.web3forms.com)
 const contactEmail = 'weeora9@gmail.com'
+const web3formsAccessKey = '' // paste Access Key here after Web3Forms signup
 const contactHref = '#contact'
 
 const contactStory = {
@@ -1476,40 +1477,57 @@ function ContactForm() {
     setError('')
     const form = e.currentTarget
     const data = new FormData(form)
-    const payload = {
-      name: String(data.get('name') || '').trim(),
-      email: String(data.get('email') || '').trim(),
-      brand: String(data.get('brand') || '').trim(),
-      message: String(data.get('message') || '').trim(),
-      _subject: 'New wee-ora enquiry',
-      _template: 'table',
-      _captcha: 'false',
+    const name = String(data.get('name') || '').trim()
+    const email = String(data.get('email') || '').trim()
+    const brand = String(data.get('brand') || '').trim()
+    const message = String(data.get('message') || '').trim()
+
+    // Preferred: Web3Forms (no public phone; lands in Gmail)
+    if (web3formsAccessKey) {
+      try {
+        const res = await fetch('https://api.web3forms.com/submit', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          body: JSON.stringify({
+            access_key: web3formsAccessKey,
+            subject: `New wee-ora enquiry — ${brand}`,
+            from_name: 'wee-ora website',
+            name,
+            email,
+            brand,
+            message,
+          }),
+        })
+        const result = await res.json().catch(() => ({}))
+        if (!res.ok || !result.success) {
+          throw new Error(result.message || 'Could not send right now')
+        }
+        setStatus('sent')
+        form.reset()
+        return
+      } catch (err) {
+        setStatus('error')
+        setError(err?.message || 'Something went wrong. Please try again in a moment.')
+        return
+      }
     }
 
-    try {
-      const res = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(contactEmail)}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body: JSON.stringify(payload),
-      })
-      const result = await res.json().catch(() => ({}))
-      if (!res.ok || result.success === 'false' || result.success === false) {
-        const msg = String(result.message || '')
-        if (/activat/i.test(msg)) {
-          setStatus('activate')
-          return
-        }
-        throw new Error(msg || 'Could not send right now')
-      }
-      setStatus('sent')
-      form.reset()
-    } catch (err) {
-      setStatus('error')
-      setError(err?.message || 'Something went wrong. Please try again in a moment.')
-    }
+    // Temporary fallback until Web3Forms access key is added
+    const body = [
+      `Name: ${name}`,
+      `Email: ${email}`,
+      `Brand: ${brand}`,
+      '',
+      message,
+    ].join('\n')
+    window.location.href = `mailto:${contactEmail}?subject=${encodeURIComponent(
+      `wee-ora enquiry — ${brand}`,
+    )}&body=${encodeURIComponent(body)}`
+    setStatus('sent')
+    form.reset()
   }
 
   const fieldStyle = {
@@ -1531,42 +1549,6 @@ function ContactForm() {
     fontSize: '0.92rem',
     color: colors.cocoaSoft,
     fontWeight: 500,
-  }
-
-  if (status === 'activate') {
-    return (
-      <div
-        style={{
-          borderRadius: 20,
-          border: `1px solid ${colors.line}`,
-          background: colors.cream,
-          padding: '1.6rem 1.4rem',
-          textAlign: 'center',
-        }}
-      >
-        <p style={{ margin: '0 0 0.45rem', fontFamily: fonts.display, fontSize: '1.7rem', fontWeight: 500 }}>
-          One quick setup step
-        </p>
-        <p style={{ margin: 0, color: colors.cocoaSoft, lineHeight: 1.55, fontSize: '1.05rem' }}>
-          Open <strong>weeora9@gmail.com</strong> (and Spam), find the FormSubmit email, and click
-          {' '}<strong>Activate Form</strong>. Then send your message again.
-        </p>
-        <button
-          type="button"
-          onClick={() => setStatus('idle')}
-          style={{
-            marginTop: '1.1rem',
-            ...ctaStyle,
-            border: 'none',
-            cursor: 'pointer',
-            padding: '0.8rem 1.2rem',
-            fontSize: '1rem',
-          }}
-        >
-          I activated it — try again
-        </button>
-      </div>
-    )
   }
 
   if (status === 'sent') {
@@ -1658,6 +1640,11 @@ function ContactForm() {
       </button>
       <p style={{ margin: 0, color: colors.cocoaSoft, fontSize: '0.9rem', lineHeight: 1.45 }}>
         Your note goes to our inbox only. No public phone number on this page.
+        {' '}You can also write directly to{' '}
+        <a href={`mailto:${contactEmail}`} style={{ color: colors.cocoa, fontWeight: 500 }}>
+          {contactEmail}
+        </a>
+        .
       </p>
     </form>
   )
