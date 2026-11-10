@@ -660,7 +660,7 @@ const aboutFacts = [
 ]
 
 // Change this to the inbox where form messages should arrive.
-const contactEmail = 'hello@wee-ora.com'
+const contactEmail = 'weeora9@gmail.com'
 const contactHref = '#contact'
 
 const contactStory = {
