@@ -1,7 +1,7 @@
 ﻿import { useEffect, useState } from 'react'
 
-const logo = '/assets/sweeora-logo-icon-cool.jpg'
-const icon = '/assets/sweeora-instagram-profile-icon.jpg'
+const logo = `${import.meta.env.BASE_URL}assets/sweeora-logo-icon-cool.jpg`
+const icon = `${import.meta.env.BASE_URL}assets/sweeora-instagram-profile-icon.jpg`
 
 const colors = {
   cream: '#FFF8F3',
