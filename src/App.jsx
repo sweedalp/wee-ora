@@ -10,7 +10,7 @@ function shouldPlayIntro() {
   const hash = window.location.hash
   if (hash && hash !== '#' && hash !== '#top') return false
   try {
-    if (sessionStorage.getItem('weeora-intro-seen') === '1') return false
+    if (sessionStorage.getItem('weeora-intro-seen-v2') === '1') return false
   } catch {
     /* private mode */
   }
@@ -21,13 +21,25 @@ function CinematicIntro({ onDone }) {
   const [leaving, setLeaving] = useState(false)
   const finished = useRef(false)
   const letters = ['w', 'e', 'e', '-', 'o', 'r', 'a']
+  const sparks = [
+    { t: '8%', l: '18%', d: '0.2s', s: 4 },
+    { t: '16%', l: '78%', d: '0.55s', s: 3 },
+    { t: '28%', l: '12%', d: '1.1s', s: 5 },
+    { t: '34%', l: '88%', d: '0.8s', s: 3 },
+    { t: '62%', l: '14%', d: '1.4s', s: 4 },
+    { t: '68%', l: '84%', d: '1.7s', s: 3 },
+    { t: '78%', l: '30%', d: '2.1s', s: 4 },
+    { t: '82%', l: '70%', d: '1.9s', s: 5 },
+    { t: '22%', l: '48%', d: '0.35s', s: 3 },
+    { t: '74%', l: '52%', d: '2.35s', s: 3 },
+  ]
 
   const finish = useCallback((delay = 0) => {
     if (finished.current) return
     finished.current = true
     setLeaving(true)
     try {
-      sessionStorage.setItem('weeora-intro-seen', '1')
+      sessionStorage.setItem('weeora-intro-seen-v2', '1')
     } catch {
       /* private mode */
     }
@@ -39,14 +51,14 @@ function CinematicIntro({ onDone }) {
 
   useEffect(() => {
     document.body.style.overflow = 'hidden'
-    const leaveTimer = setTimeout(() => setLeaving(true), 3900)
-    const doneTimer = setTimeout(() => finish(0), 4700)
+    const leaveTimer = setTimeout(() => setLeaving(true), 5600)
+    const doneTimer = setTimeout(() => finish(0), 6600)
 
     const skip = (e) => {
       if (e.key !== 'Escape' && e.key !== 'Enter' && e.key !== ' ') return
       clearTimeout(leaveTimer)
       clearTimeout(doneTimer)
-      finish(520)
+      finish(700)
     }
 
     window.addEventListener('keydown', skip)
@@ -63,7 +75,7 @@ function CinematicIntro({ onDone }) {
       className={`intro-overlay${leaving ? ' is-leaving' : ''}`}
       role="dialog"
       aria-label="wee-ora opening"
-      onClick={() => finish(520)}
+      onClick={() => finish(700)}
       style={{
         position: 'fixed',
         inset: 0,
@@ -71,80 +83,214 @@ function CinematicIntro({ onDone }) {
         display: 'grid',
         placeItems: 'center',
         cursor: 'pointer',
-        background: `
-          radial-gradient(ellipse 55% 45% at 50% 42%, ${colors.blush}cc 0%, transparent 70%),
-          radial-gradient(ellipse 40% 35% at 72% 68%, ${colors.lilac}99 0%, transparent 65%),
-          radial-gradient(ellipse 35% 30% at 28% 70%, ${colors.goldSoft}77 0%, transparent 60%),
-          linear-gradient(165deg, #FFF8F3 0%, #F8EBEF 48%, #FFF1EA 100%)
-        `,
+        overflow: 'hidden',
+        background: '#1A1412',
       }}
     >
+      {/* Stage wash — dark to soft blush light */}
       <div
         aria-hidden="true"
-        className="intro-bloom"
+        className="intro-stage"
         style={{
           position: 'absolute',
-          width: 'min(70vw, 520px)',
-          height: 'min(70vw, 520px)',
-          borderRadius: '50%',
-          background: `radial-gradient(circle, ${colors.goldSoft}66 0%, ${colors.blush}44 40%, transparent 70%)`,
-          filter: 'blur(18px)',
-          animation: 'introBloom 3.6s ease-out both',
+          inset: 0,
+          background: `
+            radial-gradient(ellipse 70% 55% at 50% 45%, #4A3532 0%, #1A1412 62%, #120E0C 100%)
+          `,
+          animation: 'introStageWake 2.4s ease-out both',
+        }}
+      />
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: `
+            radial-gradient(ellipse 48% 42% at 50% 44%, ${colors.blush}55 0%, transparent 68%),
+            radial-gradient(ellipse 36% 30% at 62% 58%, ${colors.goldSoft}33 0%, transparent 70%),
+            radial-gradient(ellipse 30% 28% at 36% 60%, ${colors.lilac}28 0%, transparent 65%)
+          `,
+          animation: 'introLightSpill 3.2s ease-out 0.35s both',
         }}
       />
 
+      {/* Soft film vignette */}
       <div
+        aria-hidden="true"
         style={{
-          position: 'relative',
-          zIndex: 1,
-          textAlign: 'center',
-          padding: '1.5rem',
-          maxWidth: '92vw',
+          position: 'absolute',
+          inset: 0,
+          background: 'radial-gradient(ellipse 75% 70% at 50% 50%, transparent 40%, rgba(10,8,7,0.72) 100%)',
+          pointerEvents: 'none',
+          animation: 'introVignette 2s ease both',
+        }}
+      />
+
+      {/* Expanding gold ring */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          width: 'min(78vw, 560px)',
+          height: 'min(78vw, 560px)',
+          borderRadius: '50%',
+          border: `1px solid ${colors.gold}55`,
+          animation: 'introRingExpand 3.8s cubic-bezier(0.22, 1, 0.36, 1) 0.45s both',
+        }}
+      />
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          width: 'min(52vw, 360px)',
+          height: 'min(52vw, 360px)',
+          animation: 'introRingExpand 3.2s cubic-bezier(0.22, 1, 0.36, 1) 0.7s both',
         }}
       >
         <div
-          className="intro-mark"
           style={{
-            width: 'clamp(72px, 16vw, 112px)',
-            height: 'clamp(72px, 16vw, 112px)',
-            margin: '0 auto 1.35rem',
+            width: '100%',
+            height: '100%',
             borderRadius: '50%',
-            overflow: 'hidden',
-            boxShadow: `0 18px 50px rgba(58, 47, 44, 0.12), 0 0 0 1px ${colors.gold}33`,
-            animation: 'introMarkIn 1.35s cubic-bezier(0.22, 1, 0.36, 1) 0.25s both',
+            border: `1px dashed ${colors.goldSoft}44`,
+            animation: 'introRingSpin 18s linear 1.2s infinite',
+          }}
+        />
+      </div>
+
+      {/* Center bloom */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          width: 'min(62vw, 420px)',
+          height: 'min(62vw, 420px)',
+          borderRadius: '50%',
+          background: `radial-gradient(circle, ${colors.goldSoft}77 0%, ${colors.blush}44 38%, transparent 72%)`,
+          filter: 'blur(22px)',
+          animation: 'introBloom 4.2s ease-out 0.2s both',
+        }}
+      />
+
+      {/* Floating sparks */}
+      {sparks.map((sp, i) => (
+        <span
+          key={i}
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            top: sp.t,
+            left: sp.l,
+            width: sp.s,
+            height: sp.s,
+            borderRadius: 1,
+            background: colors.goldSoft,
+            boxShadow: `0 0 10px ${colors.gold}`,
+            animation: `introSpark 3.4s ease-in-out ${sp.d} both`,
+          }}
+        />
+      ))}
+
+      <div
+        className="intro-cast"
+        style={{
+          position: 'relative',
+          zIndex: 2,
+          textAlign: 'center',
+          padding: '1.5rem',
+          maxWidth: '94vw',
+          animation: 'introCastRise 5.8s cubic-bezier(0.22, 1, 0.36, 1) both',
+        }}
+      >
+        <p
+          style={{
+            margin: '0 0 1.5rem',
+            fontSize: 'clamp(0.68rem, 1.8vw, 0.78rem)',
+            letterSpacing: '0.34em',
+            textTransform: 'uppercase',
+            color: colors.goldSoft,
+            animation: 'introEyebrow 1.4s ease 0.55s both',
           }}
         >
-          <img
-            src={profileCircle}
-            alt=""
-            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-            onError={(e) => {
-              e.currentTarget.src = icon
+          Presents
+        </p>
+
+        <div
+          style={{
+            position: 'relative',
+            width: 'clamp(88px, 18vw, 128px)',
+            height: 'clamp(88px, 18vw, 128px)',
+            margin: '0 auto 1.6rem',
+            animation: 'introMarkIn 1.6s cubic-bezier(0.22, 1, 0.36, 1) 0.85s both',
+          }}
+        >
+          <div
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              inset: '-14%',
+              animation: 'introHaloIn 1.4s ease 1s both',
             }}
-          />
+          >
+            <div
+              style={{
+                width: '100%',
+                height: '100%',
+                borderRadius: '50%',
+                background: `conic-gradient(from 180deg, transparent, ${colors.gold}88, transparent 40%, ${colors.goldSoft}66, transparent 75%)`,
+                animation: 'introHaloSpin 6s linear 1.2s infinite',
+                filter: 'blur(0.4px)',
+              }}
+            />
+          </div>
+          <div
+            style={{
+              position: 'relative',
+              width: '100%',
+              height: '100%',
+              borderRadius: '50%',
+              overflow: 'hidden',
+              boxShadow: `0 24px 60px rgba(0,0,0,0.35), 0 0 0 1px ${colors.gold}55, 0 0 40px ${colors.gold}33`,
+              background: colors.cream,
+            }}
+          >
+            <img
+              src={profileCircle}
+              alt=""
+              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              onError={(e) => {
+                e.currentTarget.src = icon
+              }}
+            />
+          </div>
         </div>
 
         <h1
-          className="intro-title"
           style={{
             margin: 0,
             fontFamily: fonts.display,
             fontWeight: 500,
-            fontSize: 'clamp(2.8rem, 11vw, 5.6rem)',
-            lineHeight: 0.95,
-            letterSpacing: '-0.03em',
-            color: colors.cocoa,
+            fontSize: 'clamp(3rem, 12vw, 6.2rem)',
+            lineHeight: 0.92,
+            color: colors.cream,
             display: 'flex',
             justifyContent: 'center',
             flexWrap: 'wrap',
+            textShadow: '0 18px 40px rgba(0,0,0,0.28)',
           }}
         >
           {letters.map((ch, i) => (
             <span
               key={`${ch}-${i}`}
+              className="intro-letter"
               style={{
                 display: 'inline-block',
-                animation: `introLetterIn 1.1s cubic-bezier(0.22, 1, 0.36, 1) ${0.7 + i * 0.07}s both`,
+                position: 'relative',
+                backgroundImage: `linear-gradient(180deg, #FFF8F3 10%, ${colors.goldSoft} 48%, #F2E0C5 100%)`,
+                WebkitBackgroundClip: 'text',
+                backgroundClip: 'text',
+                color: 'transparent',
+                animation: `introLetterIn 1.25s cubic-bezier(0.22, 1, 0.36, 1) ${1.35 + i * 0.09}s both`,
               }}
             >
               {ch}
@@ -152,30 +298,82 @@ function CinematicIntro({ onDone }) {
           ))}
         </h1>
 
+        {/* Shimmer sweep across title */}
         <div
           aria-hidden="true"
-          className="intro-line"
           style={{
-            width: 'min(180px, 42vw)',
-            height: 1,
-            margin: '1.15rem auto 0',
-            background: `linear-gradient(90deg, transparent, ${colors.gold}, transparent)`,
-            transformOrigin: 'center',
-            animation: 'introLineDraw 1s ease-out 1.55s both',
+            position: 'absolute',
+            left: '50%',
+            top: '42%',
+            width: 'min(520px, 86vw)',
+            height: '4.5rem',
+            transform: 'translateX(-50%)',
+            pointerEvents: 'none',
+            overflow: 'hidden',
+            mixBlendMode: 'screen',
+            opacity: 0.55,
+            animation: 'introShimmerSweep 1.8s ease 2.55s both',
           }}
-        />
+        >
+          <div
+            style={{
+              width: '35%',
+              height: '100%',
+              background: 'linear-gradient(90deg, transparent, rgba(255,248,243,0.75), transparent)',
+              filter: 'blur(6px)',
+              animation: 'introShimmerMove 1.8s ease 2.55s both',
+            }}
+          />
+        </div>
+
+        <div
+          aria-hidden="true"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.75rem',
+            marginTop: '1.35rem',
+            animation: 'introLineDraw 1.15s ease-out 2.35s both',
+          }}
+        >
+          <span
+            style={{
+              width: 'min(88px, 18vw)',
+              height: 1,
+              background: `linear-gradient(90deg, transparent, ${colors.gold})`,
+            }}
+          />
+          <span
+            style={{
+              width: 7,
+              height: 7,
+              borderRadius: 2,
+              background: colors.goldSoft,
+              boxShadow: `0 0 12px ${colors.gold}`,
+              transform: 'rotate(45deg)',
+            }}
+          />
+          <span
+            style={{
+              width: 'min(88px, 18vw)',
+              height: 1,
+              background: `linear-gradient(90deg, ${colors.gold}, transparent)`,
+            }}
+          />
+        </div>
 
         <p
-          className="intro-tag"
           style={{
-            margin: '1rem 0 0',
+            margin: '1.15rem 0 0',
             fontFamily: fonts.display,
             fontStyle: 'italic',
             fontWeight: 400,
-            fontSize: 'clamp(1.05rem, 3.4vw, 1.55rem)',
-            color: colors.cocoaSoft,
-            letterSpacing: '0.01em',
-            animation: 'introTagIn 1.15s cubic-bezier(0.22, 1, 0.36, 1) 1.9s both',
+            fontSize: 'clamp(1.1rem, 3.6vw, 1.7rem)',
+            color: '#F3E7DC',
+            letterSpacing: '0.02em',
+            textShadow: '0 10px 28px rgba(0,0,0,0.25)',
+            animation: 'introTagIn 1.35s cubic-bezier(0.22, 1, 0.36, 1) 2.85s both',
           }}
         >
           Pretty presence. Smart growth.
@@ -183,18 +381,45 @@ function CinematicIntro({ onDone }) {
 
         <p
           style={{
-            margin: '2.2rem 0 0',
-            fontSize: '0.72rem',
-            letterSpacing: '0.16em',
+            margin: '2.6rem 0 0',
+            fontSize: '0.7rem',
+            letterSpacing: '0.22em',
             textTransform: 'uppercase',
-            color: colors.cocoaSoft,
-            opacity: 0.55,
-            animation: 'introTagIn 0.8s ease 2.6s both',
+            color: colors.goldSoft,
+            animation: 'introTagIn 0.9s ease 3.8s both',
           }}
         >
-          Tap to enter
+          Enter
         </p>
       </div>
+
+      {/* Soft curtain bars for exit drama */}
+      <div
+        aria-hidden="true"
+        className="intro-curtain intro-curtain-top"
+        style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          top: 0,
+          height: '14%',
+          background: 'linear-gradient(180deg, rgba(12,9,8,0.85), transparent)',
+          pointerEvents: 'none',
+        }}
+      />
+      <div
+        aria-hidden="true"
+        className="intro-curtain intro-curtain-bottom"
+        style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          bottom: 0,
+          height: '16%',
+          background: 'linear-gradient(0deg, rgba(12,9,8,0.9), transparent)',
+          pointerEvents: 'none',
+        }}
+      />
     </div>
   )
 }
@@ -4557,36 +4782,99 @@ export default function App() {
             0% { opacity: 0; transform: translateY(12px) scale(0.92); }
             100% { opacity: 1; transform: translateY(0) scale(1); }
           }
+          @keyframes introStageWake {
+            0% { opacity: 0.2; filter: brightness(0.35); }
+            100% { opacity: 1; filter: brightness(1); }
+          }
+          @keyframes introLightSpill {
+            0% { opacity: 0; transform: scale(0.7); }
+            100% { opacity: 1; transform: scale(1); }
+          }
+          @keyframes introVignette {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+          }
           @keyframes introBloom {
-            0% { opacity: 0; transform: scale(0.55); }
-            45% { opacity: 1; transform: scale(1.05); }
-            100% { opacity: 0.7; transform: scale(1); }
+            0% { opacity: 0; transform: scale(0.4); }
+            40% { opacity: 1; transform: scale(1.08); }
+            100% { opacity: 0.75; transform: scale(1); }
+          }
+          @keyframes introRingExpand {
+            0% { opacity: 0; transform: scale(0.35); }
+            55% { opacity: 0.85; }
+            100% { opacity: 0.35; transform: scale(1); }
+          }
+          @keyframes introRingSpin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+          @keyframes introHaloSpin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+          @keyframes introHaloIn {
+            0% { opacity: 0; transform: scale(0.7) rotate(-40deg); }
+            100% { opacity: 1; transform: scale(1) rotate(0deg); }
           }
           @keyframes introMarkIn {
-            0% { opacity: 0; transform: scale(0.72) translateY(18px); filter: blur(8px); }
+            0% { opacity: 0; transform: scale(0.55) translateY(24px); filter: blur(12px); }
             100% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
           }
           @keyframes introLetterIn {
-            0% { opacity: 0; transform: translateY(28px) scale(0.92); filter: blur(6px); letter-spacing: 0.18em; }
-            100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); letter-spacing: -0.03em; }
+            0% {
+              opacity: 0;
+              transform: translateY(36px) scale(0.86);
+              filter: blur(8px);
+            }
+            100% {
+              opacity: 1;
+              transform: translateY(0) scale(1);
+              filter: blur(0);
+            }
           }
           @keyframes introLineDraw {
-            0% { opacity: 0; transform: scaleX(0.15); }
+            0% { opacity: 0; transform: scaleX(0.2); }
             100% { opacity: 1; transform: scaleX(1); }
           }
           @keyframes introTagIn {
-            0% { opacity: 0; transform: translateY(16px); filter: blur(4px); }
+            0% { opacity: 0; transform: translateY(20px); filter: blur(5px); }
             100% { opacity: 1; transform: translateY(0); filter: blur(0); }
+          }
+          @keyframes introEyebrow {
+            0% { opacity: 0; letter-spacing: 0.5em; transform: translateY(10px); }
+            100% { opacity: 0.9; letter-spacing: 0.34em; transform: translateY(0); }
+          }
+          @keyframes introSpark {
+            0% { opacity: 0; transform: scale(0.4) translateY(10px); }
+            30% { opacity: 1; transform: scale(1.2) translateY(0); }
+            100% { opacity: 0.15; transform: scale(0.7) translateY(-18px); }
+          }
+          @keyframes introShimmerSweep {
+            0% { opacity: 0; }
+            25% { opacity: 0.6; }
+            100% { opacity: 0; }
+          }
+          @keyframes introShimmerMove {
+            0% { transform: translateX(-120%); }
+            100% { transform: translateX(320%); }
+          }
+          @keyframes introCastRise {
+            0% { transform: translateY(12px); }
+            100% { transform: translateY(0); }
           }
           .intro-overlay {
             opacity: 1;
-            transition: opacity 0.55s ease, transform 0.55s ease, filter 0.55s ease;
+            transition: opacity 0.75s cubic-bezier(0.22, 1, 0.36, 1), transform 0.75s cubic-bezier(0.22, 1, 0.36, 1), filter 0.75s ease;
           }
           .intro-overlay.is-leaving {
             opacity: 0;
-            transform: scale(1.035);
-            filter: blur(8px);
+            transform: scale(1.06);
+            filter: blur(14px) brightness(1.15);
             pointer-events: none;
+          }
+          .intro-overlay.is-leaving .intro-cast {
+            transform: translateY(-18px) scale(1.04);
+            transition: transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
           }
           *, *::before, *::after { box-sizing: border-box; }
           a { color: inherit; }
