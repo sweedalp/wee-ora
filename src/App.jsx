@@ -1,7 +1,203 @@
-﻿import { useEffect, useState } from 'react'
+﻿import { useCallback, useEffect, useRef, useState } from 'react'
 
 const logo = `${import.meta.env.BASE_URL}assets/sweeora-logo-icon-cool.jpg`
 const icon = `${import.meta.env.BASE_URL}assets/sweeora-instagram-profile-icon.jpg`
+const profileCircle = `${import.meta.env.BASE_URL}assets/weeora-profile-circle.png`
+
+function shouldPlayIntro() {
+  if (typeof window === 'undefined') return false
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false
+  const hash = window.location.hash
+  if (hash && hash !== '#' && hash !== '#top') return false
+  try {
+    if (sessionStorage.getItem('weeora-intro-seen') === '1') return false
+  } catch {
+    /* private mode */
+  }
+  return true
+}
+
+function CinematicIntro({ onDone }) {
+  const [leaving, setLeaving] = useState(false)
+  const finished = useRef(false)
+  const letters = ['w', 'e', 'e', '-', 'o', 'r', 'a']
+
+  const finish = useCallback((delay = 0) => {
+    if (finished.current) return
+    finished.current = true
+    setLeaving(true)
+    try {
+      sessionStorage.setItem('weeora-intro-seen', '1')
+    } catch {
+      /* private mode */
+    }
+    setTimeout(() => {
+      document.body.style.overflow = ''
+      onDone()
+    }, delay)
+  }, [onDone])
+
+  useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    const leaveTimer = setTimeout(() => setLeaving(true), 3900)
+    const doneTimer = setTimeout(() => finish(0), 4700)
+
+    const skip = (e) => {
+      if (e.key !== 'Escape' && e.key !== 'Enter' && e.key !== ' ') return
+      clearTimeout(leaveTimer)
+      clearTimeout(doneTimer)
+      finish(520)
+    }
+
+    window.addEventListener('keydown', skip)
+    return () => {
+      clearTimeout(leaveTimer)
+      clearTimeout(doneTimer)
+      window.removeEventListener('keydown', skip)
+      document.body.style.overflow = ''
+    }
+  }, [finish])
+
+  return (
+    <div
+      className={`intro-overlay${leaving ? ' is-leaving' : ''}`}
+      role="dialog"
+      aria-label="wee-ora opening"
+      onClick={() => finish(520)}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 10000,
+        display: 'grid',
+        placeItems: 'center',
+        cursor: 'pointer',
+        background: `
+          radial-gradient(ellipse 55% 45% at 50% 42%, ${colors.blush}cc 0%, transparent 70%),
+          radial-gradient(ellipse 40% 35% at 72% 68%, ${colors.lilac}99 0%, transparent 65%),
+          radial-gradient(ellipse 35% 30% at 28% 70%, ${colors.goldSoft}77 0%, transparent 60%),
+          linear-gradient(165deg, #FFF8F3 0%, #F8EBEF 48%, #FFF1EA 100%)
+        `,
+      }}
+    >
+      <div
+        aria-hidden="true"
+        className="intro-bloom"
+        style={{
+          position: 'absolute',
+          width: 'min(70vw, 520px)',
+          height: 'min(70vw, 520px)',
+          borderRadius: '50%',
+          background: `radial-gradient(circle, ${colors.goldSoft}66 0%, ${colors.blush}44 40%, transparent 70%)`,
+          filter: 'blur(18px)',
+          animation: 'introBloom 3.6s ease-out both',
+        }}
+      />
+
+      <div
+        style={{
+          position: 'relative',
+          zIndex: 1,
+          textAlign: 'center',
+          padding: '1.5rem',
+          maxWidth: '92vw',
+        }}
+      >
+        <div
+          className="intro-mark"
+          style={{
+            width: 'clamp(72px, 16vw, 112px)',
+            height: 'clamp(72px, 16vw, 112px)',
+            margin: '0 auto 1.35rem',
+            borderRadius: '50%',
+            overflow: 'hidden',
+            boxShadow: `0 18px 50px rgba(58, 47, 44, 0.12), 0 0 0 1px ${colors.gold}33`,
+            animation: 'introMarkIn 1.35s cubic-bezier(0.22, 1, 0.36, 1) 0.25s both',
+          }}
+        >
+          <img
+            src={profileCircle}
+            alt=""
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            onError={(e) => {
+              e.currentTarget.src = icon
+            }}
+          />
+        </div>
+
+        <h1
+          className="intro-title"
+          style={{
+            margin: 0,
+            fontFamily: fonts.display,
+            fontWeight: 500,
+            fontSize: 'clamp(2.8rem, 11vw, 5.6rem)',
+            lineHeight: 0.95,
+            letterSpacing: '-0.03em',
+            color: colors.cocoa,
+            display: 'flex',
+            justifyContent: 'center',
+            flexWrap: 'wrap',
+          }}
+        >
+          {letters.map((ch, i) => (
+            <span
+              key={`${ch}-${i}`}
+              style={{
+                display: 'inline-block',
+                animation: `introLetterIn 1.1s cubic-bezier(0.22, 1, 0.36, 1) ${0.7 + i * 0.07}s both`,
+              }}
+            >
+              {ch}
+            </span>
+          ))}
+        </h1>
+
+        <div
+          aria-hidden="true"
+          className="intro-line"
+          style={{
+            width: 'min(180px, 42vw)',
+            height: 1,
+            margin: '1.15rem auto 0',
+            background: `linear-gradient(90deg, transparent, ${colors.gold}, transparent)`,
+            transformOrigin: 'center',
+            animation: 'introLineDraw 1s ease-out 1.55s both',
+          }}
+        />
+
+        <p
+          className="intro-tag"
+          style={{
+            margin: '1rem 0 0',
+            fontFamily: fonts.display,
+            fontStyle: 'italic',
+            fontWeight: 400,
+            fontSize: 'clamp(1.05rem, 3.4vw, 1.55rem)',
+            color: colors.cocoaSoft,
+            letterSpacing: '0.01em',
+            animation: 'introTagIn 1.15s cubic-bezier(0.22, 1, 0.36, 1) 1.9s both',
+          }}
+        >
+          Pretty presence. Smart growth.
+        </p>
+
+        <p
+          style={{
+            margin: '2.2rem 0 0',
+            fontSize: '0.72rem',
+            letterSpacing: '0.16em',
+            textTransform: 'uppercase',
+            color: colors.cocoaSoft,
+            opacity: 0.55,
+            animation: 'introTagIn 0.8s ease 2.6s both',
+          }}
+        >
+          Tap to enter
+        </p>
+      </div>
+    </div>
+  )
+}
 
 const colors = {
   cream: '#FFF8F3',
@@ -1362,6 +1558,7 @@ function heroFade(heroIn, delay) {
 }
 
 export default function App() {
+  const [showIntro, setShowIntro] = useState(() => shouldPlayIntro())
   const [heroIn, setHeroIn] = useState(false)
   const [navSolid, setNavSolid] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -1370,6 +1567,7 @@ export default function App() {
     typeof window !== 'undefined' && window.location.hash === '#about' ? 'about' : 'home',
   )
   const visible = useReveal(page)
+  const endIntro = useCallback(() => setShowIntro(false), [])
 
   useEffect(() => {
     document.body.style.margin = '0'
@@ -1378,15 +1576,19 @@ export default function App() {
     document.body.style.fontFamily = fonts.body
     document.documentElement.style.scrollBehavior = 'smooth'
 
-    const timer = setTimeout(() => setHeroIn(true), 60)
     const onScroll = () => setNavSolid(window.scrollY > 18)
     window.addEventListener('scroll', onScroll)
 
     return () => {
-      clearTimeout(timer)
       window.removeEventListener('scroll', onScroll)
     }
   }, [])
+
+  useEffect(() => {
+    if (showIntro) return undefined
+    const timer = setTimeout(() => setHeroIn(true), 60)
+    return () => clearTimeout(timer)
+  }, [showIntro])
 
   useEffect(() => {
     const syncFromHash = () => {
@@ -1436,6 +1638,9 @@ export default function App() {
 
   return (
     <div id="top" style={{ background: colors.cream, minHeight: '100vh', overflowX: 'hidden' }}>
+      {showIntro && page === 'home' && (
+        <CinematicIntro onDone={endIntro} />
+      )}
       {/* 1. NAVBAR */}
       <nav
         className="nav-shell"
@@ -4351,6 +4556,37 @@ export default function App() {
           @keyframes sweeCountPop {
             0% { opacity: 0; transform: translateY(12px) scale(0.92); }
             100% { opacity: 1; transform: translateY(0) scale(1); }
+          }
+          @keyframes introBloom {
+            0% { opacity: 0; transform: scale(0.55); }
+            45% { opacity: 1; transform: scale(1.05); }
+            100% { opacity: 0.7; transform: scale(1); }
+          }
+          @keyframes introMarkIn {
+            0% { opacity: 0; transform: scale(0.72) translateY(18px); filter: blur(8px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
+          }
+          @keyframes introLetterIn {
+            0% { opacity: 0; transform: translateY(28px) scale(0.92); filter: blur(6px); letter-spacing: 0.18em; }
+            100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); letter-spacing: -0.03em; }
+          }
+          @keyframes introLineDraw {
+            0% { opacity: 0; transform: scaleX(0.15); }
+            100% { opacity: 1; transform: scaleX(1); }
+          }
+          @keyframes introTagIn {
+            0% { opacity: 0; transform: translateY(16px); filter: blur(4px); }
+            100% { opacity: 1; transform: translateY(0); filter: blur(0); }
+          }
+          .intro-overlay {
+            opacity: 1;
+            transition: opacity 0.55s ease, transform 0.55s ease, filter 0.55s ease;
+          }
+          .intro-overlay.is-leaving {
+            opacity: 0;
+            transform: scale(1.035);
+            filter: blur(8px);
+            pointer-events: none;
           }
           *, *::before, *::after { box-sizing: border-box; }
           a { color: inherit; }
