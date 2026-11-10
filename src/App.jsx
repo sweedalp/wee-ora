@@ -1487,7 +1487,7 @@ function ContactForm() {
     }
 
     try {
-      const res = await fetch(`https://formsubmit.co/ajax/${contactEmail}`, {
+      const res = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(contactEmail)}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1495,12 +1495,20 @@ function ContactForm() {
         },
         body: JSON.stringify(payload),
       })
-      if (!res.ok) throw new Error('Could not send right now')
+      const result = await res.json().catch(() => ({}))
+      if (!res.ok || result.success === 'false' || result.success === false) {
+        const msg = String(result.message || '')
+        if (/activat/i.test(msg)) {
+          setStatus('activate')
+          return
+        }
+        throw new Error(msg || 'Could not send right now')
+      }
       setStatus('sent')
       form.reset()
-    } catch {
+    } catch (err) {
       setStatus('error')
-      setError('Something went wrong. Please try again in a moment.')
+      setError(err?.message || 'Something went wrong. Please try again in a moment.')
     }
   }
 
@@ -1523,6 +1531,42 @@ function ContactForm() {
     fontSize: '0.92rem',
     color: colors.cocoaSoft,
     fontWeight: 500,
+  }
+
+  if (status === 'activate') {
+    return (
+      <div
+        style={{
+          borderRadius: 20,
+          border: `1px solid ${colors.line}`,
+          background: colors.cream,
+          padding: '1.6rem 1.4rem',
+          textAlign: 'center',
+        }}
+      >
+        <p style={{ margin: '0 0 0.45rem', fontFamily: fonts.display, fontSize: '1.7rem', fontWeight: 500 }}>
+          One quick setup step
+        </p>
+        <p style={{ margin: 0, color: colors.cocoaSoft, lineHeight: 1.55, fontSize: '1.05rem' }}>
+          Open <strong>weeora9@gmail.com</strong> (and Spam), find the FormSubmit email, and click
+          {' '}<strong>Activate Form</strong>. Then send your message again.
+        </p>
+        <button
+          type="button"
+          onClick={() => setStatus('idle')}
+          style={{
+            marginTop: '1.1rem',
+            ...ctaStyle,
+            border: 'none',
+            cursor: 'pointer',
+            padding: '0.8rem 1.2rem',
+            fontSize: '1rem',
+          }}
+        >
+          I activated it — try again
+        </button>
+      </div>
+    )
   }
 
   if (status === 'sent') {
