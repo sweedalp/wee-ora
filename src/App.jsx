@@ -661,7 +661,7 @@ const aboutFacts = [
 
 // Business inbox + Web3Forms access key (from https://app.web3forms.com)
 const contactEmail = 'weeora9@gmail.com'
-const web3formsAccessKey = '' // paste Access Key here after Web3Forms signup
+const web3formsAccessKey = '065ecf37-40e7-45af-ae4a-d2e22b30ddf0'
 const contactHref = '#contact'
 
 const contactStory = {
